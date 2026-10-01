@@ -1,0 +1,23 @@
+# Web framework
+flask
+
+# PDF parsing
+pypdf
+
+# LangChain framework
+langchain
+langchain-community
+
+# Local Embeddings (Sentence Transformers)
+sentence-transformers
+langchain-huggingface
+
+# Local Vector Database
+chromadb
+langchain-chroma
+
+# Local LLM (Ollama)
+langchain-ollama
+
+# Configuration & environment variables
+python-dotenv
