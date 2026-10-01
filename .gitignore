@@ -30,3 +30,6 @@ chroma_db/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Development notes & context
+Context/
