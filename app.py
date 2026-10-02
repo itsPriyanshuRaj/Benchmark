@@ -1,5 +1,7 @@
 from flask import Flask, render_template, jsonify
 import config
+from routes.upload import upload_bp
+from routes.query import query_bp
 
 def create_app():
     app = Flask(__name__)
@@ -10,6 +12,10 @@ def create_app():
     # Ensure storage directories exist
     config.UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
     config.CHROMA_PERSIST_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Register blueprints
+    app.register_blueprint(upload_bp)
+    app.register_blueprint(query_bp)
 
     @app.route("/")
     def index():
@@ -29,3 +35,4 @@ def create_app():
 if __name__ == "__main__":
     app = create_app()
     app.run(host="127.0.0.1", port=5000, debug=True)
+
