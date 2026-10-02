@@ -3,10 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAGBench AI</title>
+    <title>RAGBench AI — Minimal RAG Platform</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --error: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="file"], input[type="text"] {
+            flex: 1;
+            padding: 0.65rem 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: #fff;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            font-size: 0.9rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .status-message.info {
+            display: block;
+            background-color: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .status-message.success {
+            display: block;
+            background-color: #f0fdf4;
+            color: var(--success);
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-message.error {
+            display: block;
+            background-color: #fef2f2;
+            color: var(--error);
+            border: 1px solid #fecaca;
+        }
+
+        .answer-box {
+            background: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            font-size: 1rem;
+        }
+
+        .chunks-list {
+            margin-top: 1.5rem;
+        }
+
+        .chunks-list h3 {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chunk-item {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .chunk-meta {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .chunk-content {
+            font-size: 0.9rem;
+            color: #334155;
+            line-height: 1.4;
+        }
+    </style>
 </head>
 <body>
-    <h1>RAGBench AI (MVP)</h1>
-    <p>Server is running. Upload and Query components will be added next.</p>
+    <div class="container">
+        <header>
+            <h1>RAGBench AI</h1>
+            <p>Minimal End-to-End RAG MVP: Upload PDF &rarr; Index &rarr; Retrieve &rarr; Generate</p>
+        </header>
+
+        <!-- Step 1: Upload PDF -->
+        <section class="card">
+            <h2>1. Upload PDF Document</h2>
+            <form id="uploadForm" class="form-group">
+                <input type="file" id="pdfFile" accept=".pdf" required>
+                <button type="submit" id="uploadBtn">Upload & Index</button>
+            </form>
+            <div id="uploadStatus" class="status-message"></div>
+        </section>
+
+        <!-- Step 2: Query RAG Pipeline -->
+        <section class="card">
+            <h2>2. Ask a Question</h2>
+            <form id="queryForm" class="form-group">
+                <input type="text" id="questionInput" placeholder="What would you like to ask about the uploaded document?" required>
+                <button type="submit" id="queryBtn">Ask</button>
+            </form>
+            <div id="queryStatus" class="status-message"></div>
+
+            <!-- Answer Section -->
+            <div id="resultSection" style="display: none;">
+                <h3 style="margin-top: 1.25rem; font-size: 1.1rem;">Generated Answer</h3>
+                <div id="answerContent" class="answer-box"></div>
+
+                <!-- Retrieved Context Chunks -->
+                <div class="chunks-list">
+                    <h3>Retrieved Source Chunks</h3>
+                    <div id="chunksContainer"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Handle PDF Upload
+        const uploadForm = document.getElementById('uploadForm');
+        const pdfFile = document.getElementById('pdfFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = pdfFile.files[0];
+            if (!file) return;
+
+            uploadBtn.disabled = true;
+            uploadStatus.className = 'status-message info';
+            uploadStatus.textContent = 'Processing PDF (loading, chunking & creating embeddings)...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    uploadStatus.className = 'status-message success';
+                    uploadStatus.textContent = `Indexed "${data.filename}" (${data.pages_loaded} page(s), ${data.chunks_indexed} chunks in Chroma).`;
+                } else {
+                    uploadStatus.className = 'status-message error';
+                    uploadStatus.textContent = data.message || 'Error uploading file.';
+                }
+            } catch (err) {
+                uploadStatus.className = 'status-message error';
+                uploadStatus.textContent = 'Network or server error while uploading.';
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Handle Query
+        const queryForm = document.getElementById('queryForm');
+        const questionInput = document.getElementById('questionInput');
+        const queryBtn = document.getElementById('queryBtn');
+        const queryStatus = document.getElementById('queryStatus');
+        const resultSection = document.getElementById('resultSection');
+        const answerContent = document.getElementById('answerContent');
+        const chunksContainer = document.getElementById('chunksContainer');
+
+        queryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            queryBtn.disabled = true;
+            queryStatus.className = 'status-message info';
+            queryStatus.textContent = 'Retrieving context from Chroma and generating answer...';
+            resultSection.style.display = 'none';
+            chunksContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    queryStatus.style.display = 'none';
+                    resultSection.style.display = 'block';
+                    answerContent.textContent = data.answer;
+
+                    if (data.retrieved_chunks && data.retrieved_chunks.length > 0) {
+                        data.retrieved_chunks.forEach((chunk, index) => {
+                            const chunkEl = document.createElement('div');
+                            chunkEl.className = 'chunk-item';
+                            chunkEl.innerHTML = `
+                                <div class="chunk-meta">Chunk #${index + 1} | Source: ${chunk.source} (Page ${chunk.page})</div>
+                                <div class="chunk-content">${chunk.content}</div>
+                            `;
+                            chunksContainer.appendChild(chunkEl);
+                        });
+                    } else {
+                        chunksContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No chunks retrieved.</p>';
+                    }
+                } else {
+                    queryStatus.className = 'status-message error';
+                    queryStatus.textContent = data.message || 'Error processing query.';
+                }
+            } catch (err) {
+                queryStatus.className = 'status-message error';
+                queryStatus.textContent = 'Network or server error while generating answer.';
+            } finally {
+                queryBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
+
