@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAGBench AI — Minimal RAG Platform</title>
+    <title>RAGBench AI — RAG Evaluation & Benchmarking Platform</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -15,6 +15,10 @@
             --border: #e2e8f0;
             --success: #16a34a;
             --error: #dc2626;
+            --tag-bg: #e0f2fe;
+            --tag-text: #0369a1;
+            --latency-bg: #fef3c7;
+            --latency-text: #92400e;
         }
 
         * {
@@ -32,26 +36,88 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         header {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             text-align: center;
         }
 
         header h1 {
-            font-size: 2rem;
+            font-size: 2.2rem;
             color: var(--text-main);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
         }
 
         header p {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
+        /* Top Navigation Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Sub-navigation Pills for Phase 2 */
+        .sub-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pill-btn {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .pill-btn.active {
+            background-color: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+        }
+
+        /* Cards and Layout */
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -63,17 +129,23 @@
 
         .card h2 {
             font-size: 1.25rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             color: var(--text-main);
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
         }
 
         .form-group {
             display: flex;
             gap: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
 
-        input[type="file"], input[type="text"] {
+        input[type="file"], input[type="text"], input[type="number"] {
             flex: 1;
             padding: 0.65rem 0.9rem;
             border: 1px solid var(--border);
@@ -82,32 +154,34 @@
             background: #fff;
         }
 
-        button {
+        button.btn-primary {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 0.65rem 1.25rem;
+            padding: 0.65rem 1.4rem;
             border-radius: 6px;
             font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: background 0.15s ease;
+            white-space: nowrap;
         }
 
-        button:hover {
+        button.btn-primary:hover {
             background-color: var(--primary-hover);
         }
 
         button:disabled {
-            background-color: #94a3b8;
+            background-color: #94a3b8 !important;
             cursor: not-allowed;
         }
 
         .status-message {
             font-size: 0.9rem;
-            padding: 0.6rem 0.8rem;
+            padding: 0.65rem 0.9rem;
             border-radius: 6px;
             display: none;
+            margin-top: 0.75rem;
         }
 
         .status-message.info {
@@ -134,44 +208,103 @@
         .answer-box {
             background: #f8fafc;
             border-left: 4px solid var(--primary);
-            padding: 1rem;
+            padding: 0.9rem;
             border-radius: 4px;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             white-space: pre-wrap;
-            font-size: 1rem;
+            font-size: 0.93rem;
+            line-height: 1.5;
         }
 
         .chunks-list {
-            margin-top: 1.5rem;
-        }
-
-        .chunks-list h3 {
-            font-size: 1rem;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            margin-top: 0.8rem;
         }
 
         .chunk-item {
             background: #ffffff;
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 0.85rem;
-            margin-bottom: 0.75rem;
+            padding: 0.7rem;
+            margin-bottom: 0.6rem;
         }
 
         .chunk-meta {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: var(--primary);
             font-weight: 600;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
         }
 
         .chunk-content {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #334155;
             line-height: 1.4;
+        }
+
+        /* Benchmark Grid Layout */
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        .benchmark-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .benchmark-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.6rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .benchmark-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .benchmark-badge {
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .latency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: var(--latency-bg);
+            color: var(--latency-text);
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Custom Config Builder Form */
+        .custom-config-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
         }
     </style>
 </head>
@@ -179,44 +312,344 @@
     <div class="container">
         <header>
             <h1>RAGBench AI</h1>
-            <p>Minimal End-to-End RAG MVP: Upload PDF &rarr; Index &rarr; Retrieve &rarr; Generate</p>
+            <p>RAG Evaluation, Benchmarking & Experimentation Platform</p>
         </header>
 
-        <!-- Step 1: Upload PDF -->
-        <section class="card">
-            <h2>1. Upload PDF Document</h2>
-            <form id="uploadForm" class="form-group">
-                <input type="file" id="pdfFile" accept=".pdf" required>
-                <button type="submit" id="uploadBtn">Upload & Index</button>
-            </form>
-            <div id="uploadStatus" class="status-message"></div>
-        </section>
+        <!-- Top Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTopTab('single')">Single RAG Pipeline</button>
+            <button class="tab-btn" onclick="switchTopTab('benchmark')">Phase 2: Benchmarks</button>
+            <button class="tab-btn" onclick="switchTopTab('quality')">Phase 3: Retrieval Quality</button>
+        </div>
 
-        <!-- Step 2: Query RAG Pipeline -->
-        <section class="card">
-            <h2>2. Ask a Question</h2>
-            <form id="queryForm" class="form-group">
-                <input type="text" id="questionInput" placeholder="What would you like to ask about the uploaded document?" required>
-                <button type="submit" id="queryBtn">Ask</button>
-            </form>
-            <div id="queryStatus" class="status-message"></div>
+        <!-- ================= TAB 1: SINGLE PIPELINE ================= -->
+        <div id="tab-single" class="tab-content active">
+            <section class="card">
+                <h2>1. Upload PDF Document</h2>
+                <form id="uploadForm" class="form-group">
+                    <input type="file" id="pdfFile" accept=".pdf" required>
+                    <button type="submit" id="uploadBtn" class="btn-primary">Upload & Index</button>
+                </form>
+                <div id="uploadStatus" class="status-message"></div>
+            </section>
 
-            <!-- Answer Section -->
-            <div id="resultSection" style="display: none;">
-                <h3 style="margin-top: 1.25rem; font-size: 1.1rem;">Generated Answer</h3>
-                <div id="answerContent" class="answer-box"></div>
+            <section class="card">
+                <h2>2. Ask a Question</h2>
+                <form id="queryForm" class="form-group">
+                    <input type="text" id="questionInput" placeholder="What would you like to ask about the uploaded document?" required>
+                    <button type="submit" id="queryBtn" class="btn-primary">Ask</button>
+                </form>
+                <div id="queryStatus" class="status-message"></div>
 
-                <!-- Retrieved Context Chunks -->
-                <div class="chunks-list">
-                    <h3>Retrieved Source Chunks</h3>
-                    <div id="chunksContainer"></div>
+                <div id="resultSection" style="display: none;">
+                    <h3 style="margin-top: 1.25rem; font-size: 1.1rem;">Generated Answer</h3>
+                    <div id="answerContent" class="answer-box"></div>
+
+                    <div class="chunks-list">
+                        <h3 style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-muted);">Retrieved Source Chunks</h3>
+                        <div id="chunksContainer"></div>
+                    </div>
                 </div>
+            </section>
+        </div>
+
+        <!-- ================= TAB 2: BENCHMARKS ================= -->
+        <div id="tab-benchmark" class="tab-content">
+            <!-- Mode Pills -->
+            <div class="sub-tabs">
+                <button class="pill-btn active" onclick="switchBenchMode('chunking')">1. Chunking Strategies</button>
+                <button class="pill-btn" onclick="switchBenchMode('topk')">2. Top-K Retrieval Depth</button>
+                <button class="pill-btn" onclick="switchBenchMode('embedding')">3. Embedding Models</button>
+                <button class="pill-btn" onclick="switchBenchMode('custom')">4. Custom Experiment Builder</button>
             </div>
-        </section>
+
+            <!-- MODE 1: CHUNKING BENCHMARK -->
+            <div id="mode-chunking" class="bench-mode-content">
+                <section class="card">
+                    <h2>Step 1: Upload Document for Chunking Benchmark</h2>
+                    <p class="card-desc">Indexes into 3 collections: <strong>Small (300/50)</strong>, <strong>Medium (800/150)</strong>, and <strong>Large (1500/300)</strong>.</p>
+                    <form id="benchUploadForm" class="form-group">
+                        <input type="file" id="benchPdfFile" accept=".pdf" required>
+                        <button type="submit" id="benchUploadBtn" class="btn-primary">Index Chunking Presets</button>
+                    </form>
+                    <div id="benchUploadStatus" class="status-message"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Step 2: Run Query & Compare Latency & Quality</h2>
+                    <form id="benchQueryForm" class="form-group">
+                        <input type="text" id="benchQuestionInput" placeholder="Enter test question to compare chunking strategies..." required>
+                        <button type="submit" id="benchQueryBtn" class="btn-primary">Compare Chunking</button>
+                    </form>
+                    <div id="benchQueryStatus" class="status-message"></div>
+                    <div id="chunkingResults" class="benchmark-grid" style="display: none;"></div>
+                </section>
+            </div>
+
+            <!-- MODE 2: TOP-K BENCHMARK -->
+            <div id="mode-topk" class="bench-mode-content" style="display: none;">
+                <section class="card">
+                    <h2>Compare Top-K Retrieval Depth</h2>
+                    <div style="background: #f1f5f9; border-left: 4px solid var(--primary); padding: 0.9rem; border-radius: 4px; margin-bottom: 1.25rem; font-size: 0.9rem;">
+                        <strong>What is Top-K?</strong>
+                        <p style="margin-top: 0.25rem; color: #475569;">
+                            When you ask a question, the vector store ranks every chunk by semantic similarity. 
+                            <strong>Top-K</strong> tells Chroma how many of the highest-ranked chunks to retrieve and feed to the LLM.
+                        </p>
+                        <ul style="margin-top: 0.5rem; margin-left: 1.2rem; color: #475569;">
+                            <li><strong>K = 1</strong>: Sends only the #1 top chunk (Fastest, minimal tokens, but risks missing multi-part answers).</li>
+                            <li><strong>K = 3</strong>: Sends the top 3 chunks (Balanced accuracy and context).</li>
+                            <li><strong>K = 5</strong>: Sends the top 5 chunks (Comprehensive context, but higher token count & latency).</li>
+                        </ul>
+                    </div>
+
+                    <form id="topkQueryForm">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Target Indexed Collection:</label>
+                                <select id="topkCollectionSelect" style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff;">
+                                    <option value="exp_chunk_medium">Loading collections...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">K Values to Compare (comma-separated):</label>
+                                <input type="text" id="topkValuesInput" value="1, 3, 5" placeholder="e.g. 1, 3, 5">
+                            </div>
+                        </div>
+
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Test Question:</label>
+                        <div class="form-group">
+                            <input type="text" id="topkQuestionInput" placeholder="Ask a question about the document to compare retrieval depths..." required>
+                            <button type="submit" id="topkQueryBtn" class="btn-primary">Compare Top-K</button>
+                        </div>
+                    </form>
+                    <div id="topkQueryStatus" class="status-message"></div>
+                    <div id="topkResults" class="benchmark-grid" style="display: none;"></div>
+                </section>
+            </div>
+
+            <!-- MODE 3: EMBEDDING MODELS BENCHMARK -->
+            <div id="mode-embedding" class="bench-mode-content" style="display: none;">
+                <section class="card">
+                    <h2>Step 1: Upload Document for Embedding Benchmark</h2>
+                    <p class="card-desc">Indexes simultaneously using <strong>all-MiniLM-L6-v2 (6 layers)</strong> and <strong>all-MiniLM-L12-v2 (12 layers)</strong>.</p>
+                    <form id="embedUploadForm" class="form-group">
+                        <input type="file" id="embedPdfFile" accept=".pdf" required>
+                        <button type="submit" id="embedUploadBtn" class="btn-primary">Index Embeddings</button>
+                    </form>
+                    <div id="embedUploadStatus" class="status-message"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Step 2: Compare Embedding Models</h2>
+                    <form id="embedQueryForm" class="form-group">
+                        <input type="text" id="embedQuestionInput" placeholder="Enter test question to compare embedding models..." required>
+                        <button type="submit" id="embedQueryBtn" class="btn-primary">Compare Embeddings</button>
+                    </form>
+                    <div id="embedQueryStatus" class="status-message"></div>
+                    <div id="embedResults" class="benchmark-grid" style="display: none;"></div>
+                </section>
+            </div>
+
+            <!-- MODE 4: CUSTOM EXPERIMENT BUILDER -->
+            <div id="mode-custom" class="bench-mode-content" style="display: none;">
+                <section class="card">
+                    <h2>Custom Chunking Experiment Builder</h2>
+                    <p class="card-desc">Define custom chunk size and overlap configurations to test your own hypotheses.</p>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Target Document Name (from uploads folder):</label>
+                        <input type="text" id="customFilename" placeholder="e.g. sample_document.pdf" style="width: 100%; margin-bottom: 1rem;">
+                    </div>
+
+                    <div id="customConfigsContainer">
+                        <div class="custom-config-row">
+                            <input type="text" class="custom-name" value="Custom Small" placeholder="Config Name">
+                            <input type="number" class="custom-size" value="400" placeholder="Chunk Size">
+                            <input type="number" class="custom-overlap" value="80" placeholder="Overlap">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Config 1</span>
+                        </div>
+                        <div class="custom-config-row">
+                            <input type="text" class="custom-name" value="Custom Large" placeholder="Config Name">
+                            <input type="number" class="custom-size" value="1200" placeholder="Chunk Size">
+                            <input type="number" class="custom-overlap" value="250" placeholder="Overlap">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Config 2</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <label style="font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Test Question:</label>
+                        <div class="form-group">
+                            <input type="text" id="customQuestion" placeholder="Enter question for custom benchmark..." required>
+                            <button type="button" id="customRunBtn" class="btn-primary" onclick="runCustomBenchmark()">Run Custom Experiment</button>
+                        </div>
+                    </div>
+                    <div id="customStatus" class="status-message"></div>
+                    <div id="customResults" class="benchmark-grid" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: RETRIEVAL QUALITY (PHASE 3) ================= -->
+        <div id="tab-quality" class="tab-content">
+            <section class="card">
+                <h2>Phase 3: Retrieval Quality Benchmark</h2>
+                <div style="background: #f8fafc; border-left: 4px solid #8b5cf6; padding: 1rem; border-radius: 4px; margin-bottom: 1.25rem; font-size: 0.9rem; line-height: 1.5;">
+                    <strong>Why Benchmark Retrieval Quality?</strong>
+                    <p style="margin-top: 0.25rem; color: #475569;">
+                        Standard vector search can fail on exact keywords or return irrelevant chunks. This benchmark compares 4 advanced retrieval strategies side-by-side:
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: var(--primary);">1. Dense Vector</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Standard Bi-Encoder semantic search (MiniLM baseline).</p>
+                        </div>
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #0284c7;">2. Hybrid Search</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Combines Dense Vector + BM25 keyword matching with RRF rank fusion.</p>
+                        </div>
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #d97706;">3. Vector + Reranker</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Dense search candidates re-scored using Cross-Encoder attention.</p>
+                        </div>
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #16a34a;">4. Hybrid + Reranker</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">The gold standard: Fused Hybrid candidates re-ranked by Cross-Encoder.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="qualityQueryForm">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Target Indexed Collection:</label>
+                            <select id="qualityCollectionSelect" style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff;">
+                                <option value="exp_chunk_medium">Loading collections...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Top-K to Return:</label>
+                            <input type="number" id="qualityTopKInput" value="3" min="1" max="10">
+                        </div>
+                    </div>
+
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Test Question:</label>
+                    <div class="form-group">
+                        <input type="text" id="qualityQuestionInput" placeholder="Enter question to test keyword and semantic retrieval quality..." required>
+                        <button type="submit" id="qualityQueryBtn" class="btn-primary">Compare 4 Strategies</button>
+                    </div>
+                </form>
+                <div id="qualityQueryStatus" class="status-message"></div>
+                <div id="qualityResults" class="benchmark-grid" style="display: none;"></div>
+            </section>
+        </div>
     </div>
 
     <script>
-        // Handle PDF Upload
+        // Tab Navigation
+        function switchTopTab(tab) {
+            document.querySelectorAll('.tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const tabMap = {
+                'single': { btnIdx: 0, elId: 'tab-single' },
+                'benchmark': { btnIdx: 1, elId: 'tab-benchmark' },
+                'quality': { btnIdx: 2, elId: 'tab-quality' }
+            };
+
+            if (tabMap[tab]) {
+                document.querySelectorAll('.tabs .tab-btn')[tabMap[tab].btnIdx].classList.add('active');
+                document.getElementById(tabMap[tab].elId).classList.add('active');
+                if (tab === 'quality' && typeof loadQualityCollections === 'function') {
+                    loadQualityCollections();
+                }
+            }
+        }
+
+        // Sub-Mode Navigation
+        function switchBenchMode(mode) {
+            document.querySelectorAll('.sub-tabs .pill-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.bench-mode-content').forEach(c => c.style.display = 'none');
+
+            const modes = ['chunking', 'topk', 'embedding', 'custom'];
+            const idx = modes.indexOf(mode);
+            if (idx !== -1) {
+                document.querySelectorAll('.sub-tabs .pill-btn')[idx].classList.add('active');
+                document.getElementById(`mode-${mode}`).style.display = 'block';
+                if (mode === 'topk' && typeof loadTopKCollections === 'function') {
+                    loadTopKCollections();
+                }
+            }
+        }
+
+        // Helper to Render Comparison Cards with Latency Badges & Score Details
+        function renderComparisonCards(container, comparisons) {
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            comparisons.forEach(comp => {
+                const col = document.createElement('div');
+                col.className = 'benchmark-card';
+
+                let chunksHtml = '';
+                if (comp.retrieved_chunks && comp.retrieved_chunks.length > 0) {
+                    comp.retrieved_chunks.forEach((chunk, i) => {
+                        let scoreTags = '';
+                        if (chunk.rerank_score !== undefined) {
+                            scoreTags += `<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; margin-right: 4px; font-weight: 600;">Rerank: ${chunk.rerank_score}</span>`;
+                        }
+                        if (chunk.rrf_score !== undefined) {
+                            scoreTags += `<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; margin-right: 4px; font-weight: 600;">RRF: ${chunk.rrf_score}</span>`;
+                        }
+                        if (chunk.dense_rank && chunk.bm25_rank) {
+                            scoreTags += `<span style="background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem;">Dense #${chunk.dense_rank} | BM25 #${chunk.bm25_rank}</span>`;
+                        }
+
+                        chunksHtml += `
+                            <div class="chunk-item">
+                                <div class="chunk-meta">
+                                    <span>Chunk #${i + 1} (Page ${chunk.page})</span>
+                                    <span>${chunk.char_count} chars</span>
+                                </div>
+                                ${scoreTags ? `<div style="margin-bottom: 0.35rem;">${scoreTags}</div>` : ''}
+                                <div class="chunk-content">${chunk.content}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    chunksHtml = '<p style="color: var(--text-muted); font-size: 0.85rem;">No chunks retrieved.</p>';
+                }
+
+                let latencyDetail = `Retr: ${comp.latency.retrieval_ms}ms`;
+                if (comp.latency.rerank_ms > 0) {
+                    latencyDetail += ` | Rerank: ${comp.latency.rerank_ms}ms`;
+                }
+                latencyDetail += ` | Gen: ${comp.latency.generation_ms}ms`;
+
+                const latencyBadge = comp.latency ? `
+                    <div class="latency-badge">
+                        <span>⚡ Total: <b>${comp.latency.total_ms}ms</b></span>
+                        <span style="opacity: 0.85;">(${latencyDetail})</span>
+                    </div>
+                ` : '';
+
+                const badgeText = comp.badge || (comp.chunk_size ? `Size: ${comp.chunk_size} / Overlap: ${comp.chunk_overlap}` : (comp.model_name || `K = ${comp.k}`));
+
+                col.innerHTML = `
+                    <div class="benchmark-header">
+                        <span class="benchmark-title">${comp.name}</span>
+                        <span class="benchmark-badge">${badgeText}</span>
+                    </div>
+                    ${latencyBadge}
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.3rem;">Answer</h4>
+                    <div class="answer-box" style="margin-top: 0; margin-bottom: 1rem;">${comp.answer}</div>
+                    <h4 style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase;">Retrieved Chunks (${comp.retrieved_chunks.length})</h4>
+                    <div class="chunks-list">${chunksHtml}</div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        // ================= 1. SINGLE PIPELINE =================
         const uploadForm = document.getElementById('uploadForm');
         const pdfFile = document.getElementById('pdfFile');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -229,18 +662,14 @@
 
             uploadBtn.disabled = true;
             uploadStatus.className = 'status-message info';
-            uploadStatus.textContent = 'Processing PDF (loading, chunking & creating embeddings)...';
+            uploadStatus.textContent = 'Processing PDF...';
 
             const formData = new FormData();
             formData.append('file', file);
 
             try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await fetch('/upload', { method: 'POST', body: formData });
                 const data = await response.json();
-
                 if (response.ok && data.status === 'success') {
                     uploadStatus.className = 'status-message success';
                     uploadStatus.textContent = `Indexed "${data.filename}" (${data.pages_loaded} page(s), ${data.chunks_indexed} chunks in Chroma).`;
@@ -250,13 +679,12 @@
                 }
             } catch (err) {
                 uploadStatus.className = 'status-message error';
-                uploadStatus.textContent = 'Network or server error while uploading.';
+                uploadStatus.textContent = 'Network or server error.';
             } finally {
                 uploadBtn.disabled = false;
             }
         });
 
-        // Handle Query
         const queryForm = document.getElementById('queryForm');
         const questionInput = document.getElementById('questionInput');
         const queryBtn = document.getElementById('queryBtn');
@@ -272,7 +700,7 @@
 
             queryBtn.disabled = true;
             queryStatus.className = 'status-message info';
-            queryStatus.textContent = 'Retrieving context from Chroma and generating answer...';
+            queryStatus.textContent = 'Retrieving context and generating answer...';
             resultSection.style.display = 'none';
             chunksContainer.innerHTML = '';
 
@@ -299,18 +727,378 @@
                             `;
                             chunksContainer.appendChild(chunkEl);
                         });
-                    } else {
-                        chunksContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No chunks retrieved.</p>';
                     }
                 } else {
                     queryStatus.className = 'status-message error';
-                    queryStatus.textContent = data.message || 'Error processing query.';
+                    queryStatus.textContent = data.message || 'Error.';
                 }
             } catch (err) {
                 queryStatus.className = 'status-message error';
-                queryStatus.textContent = 'Network or server error while generating answer.';
+                queryStatus.textContent = 'Network error.';
             } finally {
                 queryBtn.disabled = false;
+            }
+        });
+
+        // ================= 2. CHUNKING BENCHMARK =================
+        const benchUploadForm = document.getElementById('benchUploadForm');
+        const benchPdfFile = document.getElementById('benchPdfFile');
+        const benchUploadBtn = document.getElementById('benchUploadBtn');
+        const benchUploadStatus = document.getElementById('benchUploadStatus');
+
+        benchUploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = benchPdfFile.files[0];
+            if (!file) return;
+
+            benchUploadBtn.disabled = true;
+            benchUploadStatus.className = 'status-message info';
+            benchUploadStatus.textContent = 'Indexing across 3 chunking presets in Chroma...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/experiment/upload', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    benchUploadStatus.className = 'status-message success';
+                    const counts = data.experiments.map(exp => `${exp.name}: ${exp.chunks_count} chunks`).join(' | ');
+                    benchUploadStatus.textContent = `Indexed "${data.filename}". Presets: [${counts}]`;
+                } else {
+                    benchUploadStatus.className = 'status-message error';
+                    benchUploadStatus.textContent = data.message || 'Error.';
+                }
+            } catch (err) {
+                benchUploadStatus.className = 'status-message error';
+                benchUploadStatus.textContent = 'Network error.';
+            } finally {
+                benchUploadBtn.disabled = false;
+            }
+        });
+
+        const benchQueryForm = document.getElementById('benchQueryForm');
+        const benchQuestionInput = document.getElementById('benchQuestionInput');
+        const benchQueryBtn = document.getElementById('benchQueryBtn');
+        const benchQueryStatus = document.getElementById('benchQueryStatus');
+        const chunkingResults = document.getElementById('chunkingResults');
+
+        benchQueryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = benchQuestionInput.value.trim();
+            if (!question) return;
+
+            benchQueryBtn.disabled = true;
+            benchQueryStatus.className = 'status-message info';
+            benchQueryStatus.textContent = 'Benchmarking chunking strategies with latency timing...';
+            chunkingResults.style.display = 'none';
+
+            try {
+                const response = await fetch('/experiment/query/chunking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    benchQueryStatus.style.display = 'none';
+                    renderComparisonCards(chunkingResults, data.comparisons);
+                } else {
+                    benchQueryStatus.className = 'status-message error';
+                    benchQueryStatus.textContent = data.message || 'Error.';
+                }
+            } catch (err) {
+                benchQueryStatus.className = 'status-message error';
+                benchQueryStatus.textContent = 'Network error.';
+            } finally {
+                benchQueryBtn.disabled = false;
+            }
+        });
+
+        // ================= 3. TOP-K BENCHMARK =================
+        const topkQueryForm = document.getElementById('topkQueryForm');
+        const topkQuestionInput = document.getElementById('topkQuestionInput');
+        const topkCollectionSelect = document.getElementById('topkCollectionSelect');
+        const topkValuesInput = document.getElementById('topkValuesInput');
+        const topkQueryBtn = document.getElementById('topkQueryBtn');
+        const topkQueryStatus = document.getElementById('topkQueryStatus');
+        const topkResults = document.getElementById('topkResults');
+
+        async function loadTopKCollections() {
+            try {
+                const response = await fetch('/experiment/collections');
+                const data = await response.json();
+                if (response.ok && data.status === 'success' && data.collections.length > 0) {
+                    topkCollectionSelect.innerHTML = '';
+                    data.collections.forEach((col, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = col.name;
+                        let label = col.name;
+                        if (col.name === 'exp_chunk_medium') label = 'Medium Chunks (800 / 150)';
+                        else if (col.name === 'exp_chunk_small') label = 'Small Chunks (300 / 50)';
+                        else if (col.name === 'exp_chunk_large') label = 'Large Chunks (1500 / 300)';
+                        else if (col.name === 'ragbench_docs') label = 'Single Pipeline Collection (ragbench_docs)';
+
+                        opt.textContent = `${label} [${col.count} chunks]`;
+                        if (col.count > 0 && topkCollectionSelect.children.length === 0) {
+                            opt.selected = true;
+                        }
+                        topkCollectionSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Could not load collections:', e);
+            }
+        }
+        // Load collections on startup
+        loadTopKCollections();
+
+        topkQueryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = topkQuestionInput.value.trim();
+            if (!question) return;
+
+            const collection_name = topkCollectionSelect.value;
+            const k_values = topkValuesInput.value.split(',')
+                .map(v => parseInt(v.trim(), 10))
+                .filter(v => !isNaN(v) && v > 0);
+
+            if (k_values.length === 0) {
+                alert('Please enter at least one valid K value (e.g. 1, 3, 5)');
+                return;
+            }
+
+            topkQueryBtn.disabled = true;
+            topkQueryStatus.className = 'status-message info';
+            topkQueryStatus.textContent = `Comparing retrieval depths (K=${k_values.join(', ')}) on '${collection_name}'...`;
+            topkResults.style.display = 'none';
+
+            try {
+                const response = await fetch('/experiment/query/topk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, k_values, collection_name })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    topkQueryStatus.style.display = 'none';
+                    renderComparisonCards(topkResults, data.comparisons);
+                } else {
+                    topkQueryStatus.className = 'status-message error';
+                    topkQueryStatus.textContent = data.message || 'Error.';
+                }
+            } catch (err) {
+                topkQueryStatus.className = 'status-message error';
+                topkQueryStatus.textContent = 'Network error.';
+            } finally {
+                topkQueryBtn.disabled = false;
+            }
+        });
+
+        // ================= 4. EMBEDDING BENCHMARK =================
+        const embedUploadForm = document.getElementById('embedUploadForm');
+        const embedPdfFile = document.getElementById('embedPdfFile');
+        const embedUploadBtn = document.getElementById('embedUploadBtn');
+        const embedUploadStatus = document.getElementById('embedUploadStatus');
+
+        embedUploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = embedPdfFile.files[0];
+            if (!file) return;
+
+            embedUploadBtn.disabled = true;
+            embedUploadStatus.className = 'status-message info';
+            embedUploadStatus.textContent = 'Indexing across multiple embedding models...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/experiment/upload/embedding', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    embedUploadStatus.className = 'status-message success';
+                    const summary = data.experiments.map(e => `${e.name} (${e.indexing_ms}ms)`).join(' | ');
+                    embedUploadStatus.textContent = `Indexed "${data.filename}". Embeddings: [${summary}]`;
+                } else {
+                    embedUploadStatus.className = 'status-message error';
+                    embedUploadStatus.textContent = data.message || 'Error.';
+                }
+            } catch (err) {
+                embedUploadStatus.className = 'status-message error';
+                embedUploadStatus.textContent = 'Network error.';
+            } finally {
+                embedUploadBtn.disabled = false;
+            }
+        });
+
+        const embedQueryForm = document.getElementById('embedQueryForm');
+        const embedQuestionInput = document.getElementById('embedQuestionInput');
+        const embedQueryBtn = document.getElementById('embedQueryBtn');
+        const embedQueryStatus = document.getElementById('embedQueryStatus');
+        const embedResults = document.getElementById('embedResults');
+
+        embedQueryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = embedQuestionInput.value.trim();
+            if (!question) return;
+
+            embedQueryBtn.disabled = true;
+            embedQueryStatus.className = 'status-message info';
+            embedQueryStatus.textContent = 'Comparing embedding models with latency timing...';
+            embedResults.style.display = 'none';
+
+            try {
+                const response = await fetch('/experiment/query/embedding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    embedQueryStatus.style.display = 'none';
+                    renderComparisonCards(embedResults, data.comparisons);
+                } else {
+                    embedQueryStatus.className = 'status-message error';
+                    embedQueryStatus.textContent = data.message || 'Error.';
+                }
+            } catch (err) {
+                embedQueryStatus.className = 'status-message error';
+                embedQueryStatus.textContent = 'Network error.';
+            } finally {
+                embedQueryBtn.disabled = false;
+            }
+        });
+
+        // ================= 5. CUSTOM BUILDER =================
+        async function runCustomBenchmark() {
+            const filename = document.getElementById('customFilename').value.trim();
+            const question = document.getElementById('customQuestion').value.trim();
+            const statusEl = document.getElementById('customStatus');
+            const resultsEl = document.getElementById('customResults');
+            const runBtn = document.getElementById('customRunBtn');
+
+            if (!filename) {
+                alert('Please enter a target filename from uploads.');
+                return;
+            }
+            if (!question) {
+                alert('Please enter a test question.');
+                return;
+            }
+
+            const names = document.querySelectorAll('.custom-name');
+            const sizes = document.querySelectorAll('.custom-size');
+            const overlaps = document.querySelectorAll('.custom-overlap');
+
+            const configs = [];
+            for (let i = 0; i < names.length; i++) {
+                configs.push({
+                    id: `custom_${i}`,
+                    name: names[i].value || `Config ${i+1}`,
+                    chunk_size: parseInt(sizes[i].value, 10) || 500,
+                    chunk_overlap: parseInt(overlaps[i].value, 10) || 50
+                });
+            }
+
+            runBtn.disabled = true;
+            statusEl.className = 'status-message info';
+            statusEl.textContent = 'Indexing custom chunks and generating comparative answers...';
+            resultsEl.style.display = 'none';
+
+            try {
+                const response = await fetch('/experiment/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename, question, configs })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    statusEl.style.display = 'none';
+                    renderComparisonCards(resultsEl, data.comparisons);
+                } else {
+                    statusEl.className = 'status-message error';
+                    statusEl.textContent = data.message || 'Error running custom benchmark.';
+                }
+            } catch (err) {
+                statusEl.className = 'status-message error';
+                statusEl.textContent = 'Network error.';
+            } finally {
+                runBtn.disabled = false;
+            }
+        }
+
+        // ================= 6. RETRIEVAL QUALITY (PHASE 3) =================
+        const qualityQueryForm = document.getElementById('qualityQueryForm');
+        const qualityQuestionInput = document.getElementById('qualityQuestionInput');
+        const qualityCollectionSelect = document.getElementById('qualityCollectionSelect');
+        const qualityTopKInput = document.getElementById('qualityTopKInput');
+        const qualityQueryBtn = document.getElementById('qualityQueryBtn');
+        const qualityQueryStatus = document.getElementById('qualityQueryStatus');
+        const qualityResults = document.getElementById('qualityResults');
+
+        async function loadQualityCollections() {
+            try {
+                const response = await fetch('/experiment/collections');
+                const data = await response.json();
+                if (response.ok && data.status === 'success' && data.collections.length > 0) {
+                    qualityCollectionSelect.innerHTML = '';
+                    data.collections.forEach(col => {
+                        const opt = document.createElement('option');
+                        opt.value = col.name;
+                        let label = col.name;
+                        if (col.name === 'exp_chunk_medium') label = 'Medium Chunks (800 / 150)';
+                        else if (col.name === 'exp_chunk_small') label = 'Small Chunks (300 / 50)';
+                        else if (col.name === 'exp_chunk_large') label = 'Large Chunks (1500 / 300)';
+                        else if (col.name === 'ragbench_docs') label = 'Single Pipeline Collection (ragbench_docs)';
+
+                        opt.textContent = `${label} [${col.count} chunks]`;
+                        if (col.name === 'exp_chunk_medium' || qualityCollectionSelect.children.length === 0) {
+                            opt.selected = true;
+                        }
+                        qualityCollectionSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Could not load quality collections:', e);
+            }
+        }
+        // Load collections on startup
+        loadQualityCollections();
+
+        qualityQueryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = qualityQuestionInput.value.trim();
+            if (!question) return;
+
+            const collection_name = qualityCollectionSelect.value;
+            const top_k = parseInt(qualityTopKInput.value, 10) || 3;
+
+            qualityQueryBtn.disabled = true;
+            qualityQueryStatus.className = 'status-message info';
+            qualityQueryStatus.style.display = 'block';
+            qualityQueryStatus.textContent = 'Comparing 4 retrieval strategies (Dense, Hybrid, Vector+Reranker, Hybrid+Reranker)...';
+            qualityResults.style.display = 'none';
+
+            try {
+                const response = await fetch('/experiment/query/quality', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, top_k, collection_name })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    qualityQueryStatus.style.display = 'none';
+                    renderComparisonCards(qualityResults, data.comparisons);
+                } else {
+                    qualityQueryStatus.className = 'status-message error';
+                    qualityQueryStatus.textContent = data.message || 'Error running retrieval quality benchmark.';
+                }
+            } catch (err) {
+                qualityQueryStatus.className = 'status-message error';
+                qualityQueryStatus.textContent = 'Network error.';
+            } finally {
+                qualityQueryBtn.disabled = false;
             }
         });
     </script>

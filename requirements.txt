@@ -19,5 +19,9 @@ langchain-chroma
 # Local LLM (Ollama)
 langchain-ollama
 
+# Hybrid Retrieval & Keyword Search
+rank-bm25
+
 # Configuration & environment variables
 python-dotenv
+
