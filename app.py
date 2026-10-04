@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify
 import config
 from routes.upload import upload_bp
 from routes.query import query_bp
+from routes.experiment import experiment_bp
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +17,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(upload_bp)
     app.register_blueprint(query_bp)
+    app.register_blueprint(experiment_bp)
 
     @app.route("/")
     def index():
