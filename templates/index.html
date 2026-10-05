@@ -320,6 +320,7 @@
             <button class="tab-btn active" onclick="switchTopTab('single')">Single RAG Pipeline</button>
             <button class="tab-btn" onclick="switchTopTab('benchmark')">Phase 2: Benchmarks</button>
             <button class="tab-btn" onclick="switchTopTab('quality')">Phase 3: Retrieval Quality</button>
+            <button class="tab-btn" onclick="switchTopTab('evaluation')">Phase 4: Evaluation</button>
         </div>
 
         <!-- ================= TAB 1: SINGLE PIPELINE ================= -->
@@ -542,6 +543,73 @@
                 <div id="qualityResults" class="benchmark-grid" style="display: none;"></div>
             </section>
         </div>
+
+        <!-- ================= TAB 4: EVALUATION (PHASE 4) ================= -->
+        <div id="tab-evaluation" class="tab-content">
+            <section class="card">
+                <h2>Phase 4: RAG Evaluation Engine (LLM-as-a-Judge)</h2>
+                <div style="background: #f8fafc; border-left: 4px solid #10b981; padding: 1rem; border-radius: 4px; margin-bottom: 1.25rem; font-size: 0.9rem; line-height: 1.5;">
+                    <strong>Why Automated RAG Evaluation?</strong>
+                    <p style="margin-top: 0.25rem; color: #475569;">
+                        Latency and chunk sizes only show performance speed. Evaluation metrics measure answer truthfulness, hallucination rate, and retrieval signal-to-noise ratio:
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #16a34a;">1. Faithfulness (Groundedness)</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Checks if every claim is derived strictly from retrieved context (flags hallucinations).</p>
+                        </div>
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #0284c7;">2. Answer Relevance</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Checks if the answer directly and completely addresses the user's question.</p>
+                        </div>
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #8b5cf6;">3. Context Precision</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Signal-to-noise ratio: checks if retrieved chunks are relevant to the query.</p>
+                        </div>
+                        <div style="background: white; border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px;">
+                            <strong style="color: #d97706;">4. Context Recall</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted);">Checks if the retrieved context captured all necessary facts or ground-truth details.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="evalQueryForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Benchmark Mode:</label>
+                            <select id="evalModeSelect" style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff;">
+                                <option value="quality">Compare 4 Retrieval Strategies (Dense vs Hybrid vs Reranker)</option>
+                                <option value="chunking">Compare Chunking Strategies (Small vs Medium vs Large)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Target Indexed Collection:</label>
+                            <select id="evalCollectionSelect" style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff;">
+                                <option value="exp_chunk_medium">Loading collections...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Top-K to Retrieve:</label>
+                            <input type="number" id="evalTopKInput" value="3" min="1" max="10">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Test Question:</label>
+                        <input type="text" id="evalQuestionInput" placeholder="Enter question to benchmark and evaluate..." required style="width: 100%;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Reference Answer / Ground Truth (Optional):</label>
+                        <textarea id="evalGroundTruthInput" rows="2" placeholder="Optional expected answer to measure ground-truth recall and keyword overlap..." style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9rem;"></textarea>
+                    </div>
+
+                    <button type="submit" id="evalQueryBtn" class="btn-primary" style="width: 100%;">Run Benchmark with Automated Evaluation</button>
+                </form>
+                <div id="evalQueryStatus" class="status-message"></div>
+                <div id="evalResults" class="benchmark-grid" style="display: none;"></div>
+            </section>
+        </div>
     </div>
 
     <script>
@@ -553,7 +621,8 @@
             const tabMap = {
                 'single': { btnIdx: 0, elId: 'tab-single' },
                 'benchmark': { btnIdx: 1, elId: 'tab-benchmark' },
-                'quality': { btnIdx: 2, elId: 'tab-quality' }
+                'quality': { btnIdx: 2, elId: 'tab-quality' },
+                'evaluation': { btnIdx: 3, elId: 'tab-evaluation' }
             };
 
             if (tabMap[tab]) {
@@ -561,6 +630,8 @@
                 document.getElementById(tabMap[tab].elId).classList.add('active');
                 if (tab === 'quality' && typeof loadQualityCollections === 'function') {
                     loadQualityCollections();
+                } else if (tab === 'evaluation' && typeof loadEvalCollections === 'function') {
+                    loadEvalCollections();
                 }
             }
         }
@@ -632,6 +703,68 @@
                     </div>
                 ` : '';
 
+                let evalHtml = '';
+                if (comp.evaluation && comp.evaluation.metrics) {
+                    const ev = comp.evaluation;
+                    const verdictColors = {
+                        'EXCELLENT': { bg: '#dcfce7', text: '#15803d', icon: '✅' },
+                        'GOOD': { bg: '#e0f2fe', text: '#0369a1', icon: '👍' },
+                        'POTENTIAL_HALLUCINATION': { bg: '#fee2e2', text: '#b91c1c', icon: '⚠️' },
+                        'RETRIEVAL_FAILURE': { bg: '#fae8ff', text: '#86198f', icon: '🔍' },
+                        'LOW_RELEVANCE': { bg: '#fef3c7', text: '#b45309', icon: '⚠️' },
+                        'MODERATE': { bg: '#f1f5f9', text: '#475569', icon: '📊' }
+                    };
+                    const vMeta = verdictColors[ev.verdict] || { bg: '#f1f5f9', text: '#475569', icon: '📊' };
+
+                    function metricBar(label, metric) {
+                        if (!metric) return '';
+                        const pct = metric.percentage;
+                        let barColor = '#10b981';
+                        if (pct < 60) barColor = '#ef4444';
+                        else if (pct < 75) barColor = '#f59e0b';
+
+                        return `
+                            <div style="margin-bottom: 0.45rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.76rem; font-weight: 600; margin-bottom: 2px;">
+                                    <span>${label}</span>
+                                    <span>${pct}%</span>
+                                </div>
+                                <div style="background: #e2e8f0; border-radius: 4px; height: 6px; overflow: hidden;">
+                                    <div style="width: ${pct}%; background: ${barColor}; height: 100%; border-radius: 4px;"></div>
+                                </div>
+                                <div style="font-size: 0.71rem; color: #64748b; margin-top: 2px;">${metric.reason}</div>
+                            </div>
+                        `;
+                    }
+
+                    let gtBadge = '';
+                    if (ev.lexical_ground_truth_recall !== null && ev.lexical_ground_truth_recall !== undefined) {
+                        const gtPct = Math.round(ev.lexical_ground_truth_recall * 100);
+                        gtBadge = `<span style="background: #eef2ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 600;">Ground-Truth Overlap: ${gtPct}%</span>`;
+                    }
+
+                    evalHtml = `
+                        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem;">
+                                <span style="background: ${vMeta.bg}; color: ${vMeta.text}; padding: 3px 8px; border-radius: 4px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.4px;">
+                                    ${vMeta.icon} ${ev.verdict}
+                                </span>
+                                <span style="font-size: 0.82rem; font-weight: 700; color: #1e293b;">
+                                    Overall: ${ev.overall_percentage}%
+                                </span>
+                            </div>
+                            ${metricBar('Faithfulness (Groundedness)', ev.metrics.faithfulness)}
+                            ${metricBar('Answer Relevance', ev.metrics.answer_relevance)}
+                            ${metricBar('Context Precision', ev.metrics.context_precision)}
+                            ${metricBar('Context Recall', ev.metrics.context_recall)}
+                            <div style="background: white; border-left: 3px solid #6366f1; padding: 5px 8px; border-radius: 4px; font-size: 0.74rem; color: #334155; margin-top: 0.45rem;">
+                                <strong>Judge Critique:</strong> ${ev.critique}
+                            </div>
+                            ${gtBadge ? `<div style="margin-top: 0.4rem;">${gtBadge}</div>` : ''}
+                        </div>
+                    `;
+                }
+
                 const badgeText = comp.badge || (comp.chunk_size ? `Size: ${comp.chunk_size} / Overlap: ${comp.chunk_overlap}` : (comp.model_name || `K = ${comp.k}`));
 
                 col.innerHTML = `
@@ -640,6 +773,7 @@
                         <span class="benchmark-badge">${badgeText}</span>
                     </div>
                     ${latencyBadge}
+                    ${evalHtml}
                     <h4 style="font-size: 0.9rem; margin-bottom: 0.3rem;">Answer</h4>
                     <div class="answer-box" style="margin-top: 0; margin-bottom: 1rem;">${comp.answer}</div>
                     <h4 style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase;">Retrieved Chunks (${comp.retrieved_chunks.length})</h4>
@@ -1099,6 +1233,83 @@
                 qualityQueryStatus.textContent = 'Network error.';
             } finally {
                 qualityQueryBtn.disabled = false;
+            }
+        });
+
+        // ================= 7. EVALUATION ENGINE (PHASE 4) =================
+        const evalQueryForm = document.getElementById('evalQueryForm');
+        const evalModeSelect = document.getElementById('evalModeSelect');
+        const evalCollectionSelect = document.getElementById('evalCollectionSelect');
+        const evalTopKInput = document.getElementById('evalTopKInput');
+        const evalQuestionInput = document.getElementById('evalQuestionInput');
+        const evalGroundTruthInput = document.getElementById('evalGroundTruthInput');
+        const evalQueryBtn = document.getElementById('evalQueryBtn');
+        const evalQueryStatus = document.getElementById('evalQueryStatus');
+        const evalResults = document.getElementById('evalResults');
+
+        async function loadEvalCollections() {
+            try {
+                const response = await fetch('/experiment/collections');
+                const data = await response.json();
+                if (response.ok && data.status === 'success' && data.collections.length > 0) {
+                    evalCollectionSelect.innerHTML = '';
+                    data.collections.forEach(col => {
+                        const opt = document.createElement('option');
+                        opt.value = col.name;
+                        let label = col.name;
+                        if (col.name === 'exp_chunk_medium') label = 'Medium Chunks (800 / 150)';
+                        else if (col.name === 'exp_chunk_small') label = 'Small Chunks (300 / 50)';
+                        else if (col.name === 'exp_chunk_large') label = 'Large Chunks (1500 / 300)';
+                        else if (col.name === 'ragbench_docs') label = 'Single Pipeline Collection (ragbench_docs)';
+
+                        opt.textContent = `${label} [${col.count} chunks]`;
+                        if (col.name === 'exp_chunk_medium' || evalCollectionSelect.children.length === 0) {
+                            opt.selected = true;
+                        }
+                        evalCollectionSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Could not load evaluation collections:', e);
+            }
+        }
+        loadEvalCollections();
+
+        evalQueryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = evalQuestionInput.value.trim();
+            if (!question) return;
+
+            const eval_mode = evalModeSelect.value;
+            const collection_name = evalCollectionSelect.value;
+            const top_k = parseInt(evalTopKInput.value, 10) || 3;
+            const ground_truth = evalGroundTruthInput.value.trim();
+
+            evalQueryBtn.disabled = true;
+            evalQueryStatus.className = 'status-message info';
+            evalQueryStatus.style.display = 'block';
+            evalQueryStatus.textContent = 'Generating answers & running automated LLM Judge evaluation across metrics...';
+            evalResults.style.display = 'none';
+
+            try {
+                const response = await fetch('/experiment/query/evaluate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, eval_mode, collection_name, top_k, ground_truth })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'success') {
+                    evalQueryStatus.style.display = 'none';
+                    renderComparisonCards(evalResults, data.comparisons);
+                } else {
+                    evalQueryStatus.className = 'status-message error';
+                    evalQueryStatus.textContent = data.message || 'Error running evaluation benchmark.';
+                }
+            } catch (err) {
+                evalQueryStatus.className = 'status-message error';
+                evalQueryStatus.textContent = 'Network error.';
+            } finally {
+                evalQueryBtn.disabled = false;
             }
         });
     </script>

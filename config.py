@@ -40,5 +40,12 @@ DEFAULT_RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 DEFAULT_RERANK_CANDIDATES = 10
 RRF_K_CONSTANT = 60
 
+# Phase 4: Evaluation & LLM-as-a-Judge Settings
+DEFAULT_EVALUATOR_MODEL = os.getenv("EVALUATOR_MODEL", DEFAULT_OLLAMA_MODEL)
+EVALUATION_METRICS = ["faithfulness", "answer_relevance", "context_precision", "context_recall"]
+FAITHFULNESS_THRESHOLD = 0.7
+ANSWER_RELEVANCE_THRESHOLD = 0.7
+CONTEXT_PRECISION_THRESHOLD = 0.6
+
 
 
