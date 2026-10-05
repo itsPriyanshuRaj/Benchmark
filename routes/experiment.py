@@ -11,6 +11,7 @@ from rag.benchmarker import (
     run_embedding_comparison,
     run_retrieval_quality_comparison
 )
+from rag.evaluator import evaluate_rag_response
 
 experiment_bp = Blueprint("experiment", __name__, url_prefix="/experiment")
 
@@ -250,6 +251,77 @@ def query_retrieval_quality():
         return jsonify({
             "status": "success",
             "question": question,
+            "comparisons": comparisons
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ================= 6. EVALUATION & LLM-AS-A-JUDGE (PHASE 4) =================
+
+@experiment_bp.route("/evaluate", methods=["POST"])
+def evaluate_single_response():
+    """
+    Evaluates a single question, context chunks, and answer combination.
+    """
+    data = request.get_json(silent=True) or {}
+    question = data.get("question", "").strip()
+    answer = data.get("answer", "").strip()
+    context_chunks = data.get("context_chunks", [])
+    ground_truth = data.get("ground_truth", "")
+
+    if not question or not answer:
+        return jsonify({"status": "error", "message": "'question' and 'answer' are required."}), 400
+
+    try:
+        eval_result = evaluate_rag_response(
+            question=question,
+            context_chunks=context_chunks,
+            answer=answer,
+            ground_truth=ground_truth
+        )
+        return jsonify(eval_result), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@experiment_bp.route("/query/evaluate", methods=["POST"])
+def query_with_evaluation():
+    """
+    Runs a benchmark comparison (retrieval quality or chunking) and evaluates
+    every generated answer side-by-side using the local LLM-as-a-judge.
+    """
+    data = request.get_json(silent=True) or {}
+    question = data.get("question", "").strip()
+    eval_mode = data.get("eval_mode", "quality")  # "quality" or "chunking"
+    ground_truth = data.get("ground_truth", "").strip()
+    top_k = data.get("top_k", config.DEFAULT_TOP_K)
+    collection_name = data.get("collection_name", "exp_chunk_medium")
+
+    if not question:
+        return jsonify({"status": "error", "message": "The 'question' field is required."}), 400
+
+    try:
+        if eval_mode == "chunking":
+            comparisons = run_chunking_comparison(question, top_k=top_k)
+        else:
+            comparisons = run_retrieval_quality_comparison(question, top_k=top_k, collection_name=collection_name)
+
+        # Run evaluation on each comparison item
+        for comp in comparisons:
+            chunks = comp.get("retrieved_chunks", [])
+            answer = comp.get("answer", "")
+            evaluation = evaluate_rag_response(
+                question=question,
+                context_chunks=chunks,
+                answer=answer,
+                ground_truth=ground_truth
+            )
+            comp["evaluation"] = evaluation
+
+        return jsonify({
+            "status": "success",
+            "eval_mode": eval_mode,
+            "question": question,
+            "ground_truth": ground_truth,
             "comparisons": comparisons
         }), 200
     except Exception as e:
