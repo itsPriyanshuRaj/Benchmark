@@ -15,6 +15,8 @@ __pycache__/
 uploads/*
 !uploads/.gitkeep
 chroma_db/
+*.db
+*.sqlite3
 
 # Environment variables
 .env

@@ -12,6 +12,7 @@ from rag.benchmarker import (
     run_retrieval_quality_comparison
 )
 from rag.evaluator import evaluate_rag_response
+from rag.tracker import log_experiment_run
 
 experiment_bp = Blueprint("experiment", __name__, url_prefix="/experiment")
 
@@ -100,8 +101,10 @@ def query_chunking_experiments():
 
     try:
         comparisons = run_chunking_comparison(question, top_k=top_k)
+        run_id = log_experiment_run("chunking", question, comparisons, top_k=top_k)
         return jsonify({
             "status": "success",
+            "run_id": run_id,
             "question": question,
             "comparisons": comparisons
         }), 200
@@ -126,8 +129,10 @@ def query_topk_experiments():
 
     try:
         comparisons = run_topk_comparison(question, k_values=k_values, collection_name=collection_name)
+        run_id = log_experiment_run("topk", question, comparisons, collection_name=collection_name)
         return jsonify({
             "status": "success",
+            "run_id": run_id,
             "question": question,
             "comparisons": comparisons
         }), 200
@@ -185,8 +190,10 @@ def query_embedding_experiments():
 
     try:
         comparisons = run_embedding_comparison(question, top_k=top_k)
+        run_id = log_experiment_run("embedding", question, comparisons, top_k=top_k)
         return jsonify({
             "status": "success",
+            "run_id": run_id,
             "question": question,
             "comparisons": comparisons
         }), 200
@@ -217,9 +224,11 @@ def run_custom_benchmark():
         documents = load_pdf(save_path)
         index_experiments(documents, configs=configs)
         comparisons = run_chunking_comparison(question, top_k=top_k, configs=configs)
+        run_id = log_experiment_run("custom", question, comparisons, top_k=top_k)
 
         return jsonify({
             "status": "success",
+            "run_id": run_id,
             "question": question,
             "comparisons": comparisons
         }), 200
@@ -248,8 +257,16 @@ def query_retrieval_quality():
 
     try:
         comparisons = run_retrieval_quality_comparison(question, top_k=top_k, collection_name=collection_name)
+        run_id = log_experiment_run(
+            "quality",
+            question,
+            comparisons,
+            collection_name=collection_name,
+            top_k=top_k
+        )
         return jsonify({
             "status": "success",
+            "run_id": run_id,
             "question": question,
             "comparisons": comparisons
         }), 200
@@ -317,8 +334,18 @@ def query_with_evaluation():
             )
             comp["evaluation"] = evaluation
 
+        run_id = log_experiment_run(
+            "evaluation",
+            question,
+            comparisons,
+            collection_name=collection_name,
+            top_k=top_k,
+            ground_truth=ground_truth
+        )
+
         return jsonify({
             "status": "success",
+            "run_id": run_id,
             "eval_mode": eval_mode,
             "question": question,
             "ground_truth": ground_truth,

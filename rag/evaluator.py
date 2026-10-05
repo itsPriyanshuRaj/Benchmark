@@ -100,7 +100,7 @@ def calculate_heuristic_overlap(reference_text, candidate_text):
     intersection = meaningful_ref.intersection(cand_words)
     return round(len(intersection) / len(meaningful_ref), 3)
 
-def evaluate_rag_response(question, context_chunks, answer, ground_truth=None, model_name=None):
+def evaluate_rag_response(question, context_chunks=None, answer="", ground_truth=None, model_name=None, mode="heuristic", contexts=None):
     """
     Evaluates a RAG response across 4 core metrics using local LLM-as-a-Judge:
     1. Faithfulness (Groundedness): Answer claims are supported by retrieved context without hallucination.
@@ -108,6 +108,9 @@ def evaluate_rag_response(question, context_chunks, answer, ground_truth=None, m
     3. Context Precision: Retrieved chunks contain information relevant to the question.
     4. Context Recall: Retrieved context contains the facts necessary to answer completely (or matches ground truth).
     """
+    if context_chunks is None:
+        context_chunks = contexts or []
+
     if model_name is None:
         model_name = getattr(config, "DEFAULT_EVALUATOR_MODEL", getattr(config, "DEFAULT_OLLAMA_MODEL", "llama3.2:3b"))
 

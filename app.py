@@ -3,6 +3,8 @@ import config
 from routes.upload import upload_bp
 from routes.query import query_bp
 from routes.experiment import experiment_bp
+from routes.dashboard import dashboard_bp
+from routes.optimizer import optimizer_bp
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +20,8 @@ def create_app():
     app.register_blueprint(upload_bp)
     app.register_blueprint(query_bp)
     app.register_blueprint(experiment_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(optimizer_bp)
 
     @app.route("/")
     def index():
